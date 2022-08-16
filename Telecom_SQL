@@ -1,0 +1,366 @@
+-- Data obtained from https://www.mavenanalytics.io/data-playground?page=3&pageSize=5
+-- Telecom customer churn data exploration project
+
+-- Create tables
+
+CREATE TABLE customer_churn
+(
+Customer_ID VARCHAR(50),
+Gender VARCHAR(50),
+Age INT,
+Married BOOL,
+No_Dependents INT,
+City VARCHAR(50),
+Zipcode INT,
+Latitude NUMERIC,
+Longitude NUMERIC,
+No_of_Referrals INT,
+Tenure_in_Months INT,
+Offer VARCHAR(50),
+Phone_Service BOOL,
+Avg_Monthly_Long_Distance_Charges NUMERIC,
+Multiple_Lines BOOL,
+Internet_Service BOOL,
+Internet_Type VARCHAR(50),
+Avg_Monthly_GB_Download	 INT,
+Online_Security BOOL,
+Online_Backup BOOL,
+Device_Protection_Plan	 BOOL,
+Premium_Tech_Support BOOL,
+Streaming_TV BOOL,
+Streaming_Movies BOOL,
+Streaming_Music BOOL,
+Unlimited_Data BOOL,
+Contract VARCHAR(50),
+Paperless_Billing BOOL,
+Payment_Method VARCHAR(50),
+Monthly_Charge NUMERIC,
+Total_Charges NUMERIC,
+Total_Refunds NUMERIC,
+Total_Extra_Data_Charges NUMERIC,
+Total_Long_Distance_Charges	 NUMERIC,
+Total_Revenue NUMERIC,
+Customer_Status VARCHAR(50),
+Churn_Category VARCHAR(50),
+Churn_Reason TEXT
+);
+
+COPY customer_churn (Customer_ID, Gender, Age, Married, No_Dependents, City, Zipcode, Latitude, Longitude, No_of_Referrals,
+Tenure_in_Months, Offer, Phone_Service, Avg_Monthly_Long_Distance_Charges, Multiple_Lines, Internet_Service, Internet_Type, 
+Avg_Monthly_GB_Download, Online_Security, Online_Backup, Device_Protection_Plan, Premium_Tech_Support, Streaming_TV,
+Streaming_Movies, Streaming_Music, Unlimited_Data, Contract, Paperless_Billing, Payment_Method, Monthly_Charge, Total_Charges,
+Total_Refunds, Total_Extra_Data_Charges, Total_Long_Distance_Charges, Total_Revenue, Customer_Status, Churn_Category, Churn_Reason)
+FROM 'C:\Users\kayla\OneDrive\Desktop\Datasets\Telecom\customer_churn.csv'
+DELIMITER ','
+CSV HEADER;
+
+SELECT *
+FROM customer_churn;
+
+CREATE TABLE zipcode_pop
+(
+zipcode INT,
+population INT
+);
+
+COPY zipcode_pop (zipcode, population)
+FROM 'C:\Users\kayla\OneDrive\Desktop\Datasets\Telecom\zipcode_pop.csv'
+DELIMITER ','
+CSV HEADER;
+
+SELECT *
+FROM zipcode_pop;
+
+-- Data cleaning 
+-- Checking for invalid data entries
+
+SELECT gender
+FROM customer_churn
+GROUP BY 1;
+
+SELECT age
+FROM customer_churn
+GROUP BY 1
+ORDER BY 1 DESC;
+
+SELECT no_dependents
+FROM customer_churn
+GROUP BY 1
+ORDER BY 1 DESC;
+
+SELECT city, zipcode
+FROM customer_churn
+GROUP BY 1, 2
+ORDER BY 1;
+
+SELECT latitude, longitude
+FROM customer_churn
+ORDER BY 1 DESC;
+
+SELECT tenure_in_months
+FROM customer_churn
+GROUP BY 1
+ORDER BY 1;
+
+SELECT offer
+FROM customer_churn
+GROUP BY 1;
+
+SELECT avg_monthly_long_distance_charges, total_long_distance_charges
+FROM customer_churn
+GROUP BY 1, 2
+ORDER BY 1;
+
+UPDATE customer_churn
+SET avg_monthly_long_distance_charges = 0
+WHERE avg_monthly_long_distance_charges IS NULL;
+
+SELECT avg_monthly_long_distance_charges, total_long_distance_charges
+FROM customer_churn
+GROUP BY 1, 2
+ORDER BY 1 DESC;
+
+SELECT internet_type
+FROM customer_churn
+GROUP BY 1;
+
+UPDATE customer_churn
+SET internet_type = 'None'
+WHERE internet_type IS NULL;
+
+SELECT avg_monthly_gb_download
+FROM customer_churn
+GROUP BY 1
+ORDER BY 1;
+
+UPDATE customer_churn
+SET avg_monthly_gb_download = 0
+WHERE internet_type = 'None';
+
+SELECT online_security
+FROM customer_churn
+GROUP BY 1;
+
+UPDATE customer_churn
+SET online_security = 'false'
+WHERE internet_type = 'None';
+
+SELECT online_backup
+FROM customer_churn
+GROUP BY 1;
+
+UPDATE customer_churn
+SET online_backup = 'false'
+WHERE internet_type = 'None';
+
+SELECT device_protection_plan
+FROM customer_churn
+GROUP BY 1;
+
+UPDATE customer_churn
+SET device_protection_plan = 'false'
+WHERE internet_type = 'None';
+
+SELECT premium_tech_support
+FROM customer_churn
+GROUP BY 1;
+
+UPDATE customer_churn
+SET premium_tech_support = 'false'
+WHERE internet_type = 'None';
+
+SELECT streaming_tv, streaming_movies, streaming_music
+FROM customer_churn
+GROUP BY 1,2,3;
+
+UPDATE customer_churn
+SET streaming_tv = 'false'
+WHERE internet_type = 'None';
+
+UPDATE customer_churn
+SET streaming_movies = 'false'
+WHERE internet_type = 'None';
+
+UPDATE customer_churn
+SET streaming_music = 'false'
+WHERE internet_type = 'None';
+
+SELECT unlimited_data
+FROM customer_churn
+GROUP BY 1;
+
+UPDATE customer_churn
+SET unlimited_data = 'false'
+WHERE internet_type = 'None';
+
+SELECT contract
+FROM customer_churn
+GROUP BY 1;
+
+SELECT payment_method
+FROM customer_churn
+GROUP BY 1;
+
+SELECT monthly_charge, total_charges, total_refunds, total_extra_data_charges, total_long_distance_charges
+FROM customer_churn
+ORDER BY 1;
+
+-- Customer enrollment for last quarter (Q2 2022) and yearly basis (part year for 2022 and 2016)
+
+SELECT 
+    COUNT(customer_id)
+FROM customer_churn
+WHERE tenure_in_months <=3; -- 1051
+
+SELECT
+    CASE WHEN tenure_in_months BETWEEN 1 AND 6 THEN 2022
+         WHEN tenure_in_months BETWEEN 7 AND 18 THEN 2021
+         WHEN tenure_in_months BETWEEN 19 AND 30 THEN 2020
+         WHEN tenure_in_months BETWEEN 31 AND 42 THEN 2019
+         WHEN tenure_in_months BETWEEN 43 AND 54 THEN 2018
+         WHEN tenure_in_months BETWEEN 55 AND 66 THEN 2017
+         WHEN tenure_in_months BETWEEN 67 AND 78 THEN 2016
+         ELSE NULL
+         END AS yr,
+     COUNT(customer_id)
+FROM customer_churn
+GROUP BY 1 
+ORDER BY 1 DESC; -- 2022 has most enrollment numbers even with a partial year followed by 2021
+
+-- Analyzing numbers and reasons for churned customers
+
+SELECT
+    customer_status,
+    COUNT(*) AS category_count,
+    (COUNT(*) / (SUM(COUNT(*)) OVER() )) * 100 AS category_percent
+FROM
+    customer_churn
+GROUP BY 1
+ORDER BY 3 DESC; -- 67% stayed, 27% churned, 6% joined
+
+SELECT
+    churn_category,
+    COUNT(*) AS category_count,
+    (COUNT(*) / (SUM(COUNT(*)) OVER() )) * 100 AS category_percent
+FROM
+    customer_churn
+WHERE customer_status = 'Churned'
+GROUP BY 1
+ORDER BY 3 DESC; -- #1 reason for churning was competitor
+
+SELECT
+    churn_reason,
+    COUNT(*) AS category_count,
+    (COUNT(*) / (SUM(COUNT(*)) OVER() )) * 100 AS category_percent
+FROM
+    customer_churn
+WHERE customer_status = 'Churned'
+GROUP BY 1
+ORDER BY 3 DESC; -- Top reasons included competitor having better devices, competitor made better offer, attitude of support staff, don't know, competitor offered more data
+
+-- Profiles of churned customers
+
+SELECT
+    customer_status,
+    gender,
+    COUNT(gender) AS gender_count,
+    (COUNT(gender) / (SUM(COUNT(gender)) OVER(partition by customer_status) )) * 100 AS gender_percent
+FROM
+    customer_churn
+GROUP BY 1, 2
+ORDER BY 3 DESC; -- Similar churn rates for gender across customer status
+
+SELECT
+    customer_status,
+    age_range,
+    age_count,
+    (age_count) / (SUM(age_count) OVER(partition by customer_status) ) * 100 AS age_percent_of_status,
+    (age_count / (SUM(age_count) OVER(partition by age_range) )) * 100 AS age_percent_of_age_band
+FROM
+(
+SELECT 
+        customer_status,
+        CASE WHEN age BETWEEN 19 AND 29 THEN '19-29'
+         WHEN age BETWEEN 30 AND 39 THEN '30-39'
+         WHEN age BETWEEN 40 AND 49 THEN '40-49'
+         WHEN age BETWEEN 50 AND 59 THEN '50-59'
+         WHEN age BETWEEN 60 AND 69 THEN '60-69'
+         WHEN age BETWEEN 70 AND 80 THEN '70-80'
+         ELSE NULL
+         END AS age_range,
+    COUNT(*) AS age_count
+FROM customer_churn
+GROUP BY 1, 2
+ORDER BY 2 DESC, 1) AS age_bands
+GROUP BY 1, 2, 3
+ORDER BY 2 DESC, 1; -- Age band 70-80 has highest churn rate by status and age bands
+
+SELECT
+    customer_status,
+    married,
+    COUNT(*) AS marital_count,
+    (COUNT(married) / (SUM(COUNT(married)) OVER(partition by customer_status) )) * 100 AS married_percent
+FROM
+    customer_churn
+GROUP BY 1, 2
+ORDER BY 2; -- Churned customers more likley to be single
+
+SELECT
+    customer_status,
+    no_dependents,
+    COUNT(*) AS dependents_count,
+     (COUNT(no_dependents) / (SUM(COUNT(no_dependents)) OVER(partition by customer_status) )) * 100 AS dependent_percent
+FROM
+    customer_churn
+GROUP BY 1, 2
+ORDER BY 2 DESC; -- Childfree customers were more likely to churn
+ 
+SELECT customer_churn.zipcode AS zipcode,
+       population,
+       CAST(COUNT(customer_churn.zipcode) AS DECIMAL) AS zip_count,
+       (CAST(COUNT(customer_churn.zipcode) AS DECIMAL) / population)*100
+FROM customer_churn
+    LEFT JOIN zipcode_pop
+        ON customer_churn.zipcode = zipcode_pop.zipcode
+WHERE customer_status = 'Churned'
+GROUP BY 1, 2
+ORDER BY 4 DESC; -- relative to population size the following zipcodes had the highest churn rates: 95937, 95232, 90071, 90263, 92338
+
+SELECT
+    customer_status,
+    offer,
+    COUNT(*) AS offer_count,
+     (COUNT(offer) / (SUM(COUNT(offer)) OVER(partition by customer_status) )) * 100 AS offer_percent
+FROM
+    customer_churn
+GROUP BY 1, 2
+ORDER BY 1, 2;  -- Similar rates of no offers for each status; least successful offer was Offer E across groups
+ 
+SELECT
+    customer_status,
+    contract,
+    COUNT(*) AS contract_count,
+    (COUNT(contract) / (SUM(COUNT(contract)) OVER(partition by customer_status) )) * 100 AS contract_percent
+FROM
+    customer_churn
+GROUP BY 1,2
+ORDER BY 1, 2 DESC; -- Month to month most prominent contract type for churned & joined customers
+
+SELECT
+    customer_status,
+    internet_service,
+    COUNT(*) AS internet_count,
+    (COUNT(internet_service) / (SUM(COUNT(internet_service)) OVER(partition by customer_status) )) * 100 AS internet_percent
+FROM
+    customer_churn
+GROUP BY 1,2
+ORDER BY 1,2 DESC; -- Churned customers more likely to have internet services
+
+-- Customer status and impact on revenue
+
+SELECT customer_status,
+        AVG(monthly_charge),
+        AVG(avg_monthly_long_distance_charges)
+FROM customer_churn
+GROUP BY 1
+ORDER BY 2 DESC; -- churned customers have an average monthly charge higher than stayed or joined customers
